@@ -1,5 +1,3 @@
-# olive-disease-prediction-
-
 # Olive Disease Detection & Prediction using Deep Learning
 
 A deep learning-based system for automated detection and classification of olive leaf diseases using PyTorch and transfer learning. This project aims to assist Palestinian and Middle Eastern farmers in early disease identification to improve crop yield and reduce pesticide use.
