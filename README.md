@@ -179,7 +179,7 @@ olive-disease-prediction/
 │       └── train/                    # Train split
 │       └── test/                     # Test split
 │
-├── olive-leaf-detection.ipynb        # Exploratory data analysis, Model training notebook, Evaluation and analysis
+├── olive_leaf_detection.ipynb        # Exploratory data analysis, Model training notebook, Evaluation and analysis
 │
 ├── train.py                          # Training pipeline
 │   
@@ -253,14 +253,6 @@ python -c "import cv2; print(f'OpenCV version: {cv2.__version__}')"
 
 ### 1. Exploratory Data Analysis (EDA)
 
-```bash
-# Run the EDA notebook
-jupyter notebook notebooks/01_eda.ipynb
-
-# Or run EDA script
-python src/data/preprocessing.py --analyze
-```
-
 **EDA Tasks:**
 - Load and visualize sample images
 - Analyze class distribution
@@ -273,35 +265,13 @@ python src/data/preprocessing.py --analyze
 #### Quick Start
 
 ```bash
-python src/models/train.py --config configs/training_config.yaml
-```
-
-#### Advanced Training
-
-```bash
-python src/models/train.py \
-    --config configs/training_config.yaml \
-    --model resnet50 \
-    --epochs 50 \
-    --batch-size 32 \
-    --learning-rate 0.001 \
-    --augment
+python train.py --config config.yaml
 ```
 
 #### Using Jupyter Notebook
 
 ```bash
-jupyter notebook notebooks/02_model_training.ipynb
-```
-
-### 3. Model Evaluation
-
-```bash
-# Evaluate trained model
-python src/models/evaluate.py --model results/models/best_model.pth
-
-# Run evaluation notebook
-jupyter notebook notebooks/03_model_evaluation.ipynb
+jupyter notebook olive_leaf_detection_notebook.ipynb
 ```
 
 ### 4. Make Predictions
@@ -326,7 +296,7 @@ python predict.py \
 ### 5. Run API Service (Locally)
 
 ```bash
-# Start Flask API
+# Start Fast API
 python predict.py --host 0.0.0.0 --port 8000
 
 # API will be available at http://localhost:8000
@@ -350,7 +320,7 @@ docker build -f docker/Dockerfile -t olive-disease-detection:latest .
 #### Run Docker Container
 
 ```bash
-docker run -p 5000:5000 olive-disease-detection:latest
+docker run -p 8000:8000 olive-disease-detection:latest
 ```
 
 ---
@@ -359,7 +329,7 @@ docker run -p 5000:5000 olive-disease-detection:latest
 
 ### Models Implemented
 
-#### 1. ResNet-50 (Baseline)
+#### 1. MobileNet-v2 (Baseline)
 
 ```python
 from torchvision.models import mobilenet_v2
@@ -423,8 +393,8 @@ model.head = torch.nn.Linear(model.head.in_features, num_classes)
 
 ```yaml
 # config.yaml
-model: resnet50
-num_classes: 6
+model: mobilenet-v2
+num_classes: 3
 input_size: 224
 
 optimizer:
@@ -474,7 +444,7 @@ trainer = Trainer(
 trainer.train(train_dataset, val_dataset, epochs=50)
 
 # Save best model
-trainer.save_best_model('results/models/best_model.pth')
+trainer.save_best_model('/models/best_model.pth')
 ```
 ---
 
@@ -557,10 +527,10 @@ curl -X POST http://localhost:8000/predict \
 
 ```bash
 # Start API service
-python predict.py --port 5000
+python predict.py --port 8000
 
 # Test endpoint
-curl http://localhost:5000/health
+curl http://localhost:8000/health
 ```
 
 ### Docker Deployment
@@ -574,7 +544,7 @@ docker build -f docker/Dockerfile -t olive-disease-detection:v1.0 .
 # Run container
 docker run -d \
   --name olive-api \
-  -p 5000:5000 \
+  -p 8000:8000 \
   -v $(pwd)/results:/app/results \
   olive-disease-detection:v1.0
 
@@ -630,25 +600,6 @@ gcloud run deploy olive-disease-detection \
   --region us-central1
 ```
 
----
-
-## Results & Performance
-
-### Model Performance Summary
-
-**Best Model:** EfficientNet-B4 + Vision Transformer Ensemble
-
-```
-Accuracy: 96.8%
-Precision (weighted): 0.968
-Recall (weighted): 0.968
-F1-Score (weighted): 0.968
-
-Per-Class Performance:
-- Healthy:              Precision: 0.98, Recall: 0.96
-- Peacock Spot:         Precision: 0.97, Recall: 0.98
-- Olive Knot:           Precision: 0.96, Recall: 0.95
-```
 ---
 
 ## Contributing
