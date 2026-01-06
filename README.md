@@ -362,9 +362,9 @@ docker run -p 5000:5000 olive-disease-detection:latest
 #### 1. ResNet-50 (Baseline)
 
 ```python
-from torchvision.models import resnet50
+from torchvision.models import mobilenet_v2
 
-model = resnet50(pretrained=True)
+model = mobilenet_v2(pretrained=True)
 model.fc = torch.nn.Linear(2048, num_classes)
 ```
 
@@ -388,6 +388,7 @@ model.classifier[-1] = torch.nn.Linear(model.classifier[-1].in_features, num_cla
 - B0: lightweight, B4: more powerful
 - Recommended for production
 
+#### Another models you can train: 
 #### 3. Inception-V3
 
 ```python
