@@ -1,0 +1,248 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: olive-disease-api
+  namespace: default
+  labels:
+    app: olive-disease-api
+    version: v1
+    environment: production
+  annotations:
+    description: "Production deployment of Olive Disease Detection API"
+    team: "MLOps"
+    project: "Agricultural AI"
+
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  selector:
+    matchLabels:
+      app: olive-disease-api
+  
+  template:
+    metadata:
+      labels:
+        app: olive-disease-api
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    
+    spec:
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Pod anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - olive-disease-api
+                topologyKey: kubernetes.io/hostname
+      
+      # Init containers
+      initContainers:
+        - name: wait-for-model
+          image: busybox:1.36
+          command: ['sh', '-c', 'until [ -f /app/models/best_model.pth ]; do echo Waiting for model file...; sleep 5; done']
+          volumeMounts:
+            - name: model-volume
+              mountPath: /app/models
+      
+      # Main containers
+      containers:
+        - name: olive-api
+          image: olive-disease-api:latest
+          imagePullPolicy: IfNotPresent
+          
+          # Ports
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          
+          # Environment variables
+          env:
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+            - name: SERVER_PORT
+              value: "8000"
+            - name: WORKERS
+              value: "4"
+            - name: MODEL_PATH
+              value: "/app/models/best_model.pth"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          
+          # Resource limits and requests
+          resources:
+            requests:
+              cpu: "500m"           # 0.5 CPU
+              memory: "1Gi"         # 1GB RAM
+              ephemeral-storage: "500Mi"
+            limits:
+              cpu: "1000m"          # 1 CPU
+              memory: "2Gi"         # 2GB RAM
+              ephemeral-storage: "1Gi"
+          
+          # Liveness probe - checks if pod should be restarted
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          
+          # Readiness probe - checks if pod is ready for traffic
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 2
+          
+          # Startup probe - allows time for application to start
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 30
+          
+          # Security context for container
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          
+          # Volume mounts
+          volumeMounts:
+            - name: model-volume
+              mountPath: /app/models
+              readOnly: true
+            - name: config-volume
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: cache-volume
+              mountPath: /app/.cache
+          
+          # Logging
+          logging:
+            driver: "json-file"
+            options:
+              max-size: "10m"
+              max-file: "3"
+      
+      # Volumes
+      volumes:
+        # Model storage
+        - name: model-volume
+          hostPath:
+            path: /data/olive-models
+            type: DirectoryOrCreate
+        
+        # Configuration
+        - name: config-volume
+          configMap:
+            name: olive-config
+            optional: false
+        
+        # Temporary storage (writable)
+        - name: tmp-volume
+          emptyDir:
+            sizeLimit: 500Mi
+        
+        # Cache storage
+        - name: cache-volume
+          emptyDir:
+            sizeLimit: 500Mi
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+      
+      # DNS policy
+      dnsPolicy: ClusterFirst
+      
+      # Restart policy
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: olive-config
+  namespace: default
+  labels:
+    app: olive-disease-api
+
+data:
+  config.yaml: |
+    project:
+      name: "Olive Disease Detection"
+      version: "1.0"
+    
+    dataset:
+      classes:
+        - "Healthy"
+        - "Olive_Knot"
+        - "Peacock_Spot"
+      num_classes: 3
+      image_size: 224
+    
+    inference:
+      confidence_threshold: 0.7
+      device: "cpu"
+    
+    logging:
+      level: "INFO"
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: olive-disease-api-pdb
+  namespace: default
+
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: olive-disease-api
+  unhealthyPodEvictionPolicy: AlwaysAllow

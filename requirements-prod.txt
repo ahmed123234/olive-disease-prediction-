@@ -1,0 +1,40 @@
+# ==============================================================================
+# Olive Disease Detection - Production Requirements
+# Optimized for Docker containerization and Kubernetes deployment
+# ==============================================================================
+
+# Web Framework & API
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.4.2
+pydantic-settings==2.0.3
+
+# Machine Learning & Computer Vision
+torch==2.1.0+cpu
+torchvision==0.16.0+cpu
+opencv-python==4.8.1.78
+Pillow==10.0.0
+numpy==1.24.3
+
+# Async & HTTP
+httpx==0.25.0
+aiofiles==23.2.1
+requests==2.31.0
+
+# Monitoring & Logging
+prometheus-client==0.17.1
+python-json-logger==2.0.7
+
+# Data & Config
+pyyaml==6.0
+
+# Production Server
+gunicorn==21.2.0
+python-multipart==0.0.6
+
+# Utilities
+python-dotenv==1.0.0
+python-dateutil==2.8.2
+
+# Type hints
+typing-extensions==4.8.0
