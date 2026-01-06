@@ -251,7 +251,7 @@ class OliveTrainer:
                 train_preds.extend(outputs.argmax(1).cpu().numpy())
                 train_targets.extend(labels.cpu().numpy())
                 
-                pbar.set_postfix({'loss': loss.item():.4f})
+                pbar.set_postfix({'loss': loss.item()})
             
             # Validation phase
             val_loss, val_acc, val_preds, val_targets = self.validate(model, criterion)

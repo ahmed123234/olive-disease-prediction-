@@ -11,10 +11,11 @@ dataset:
   image_size: 224
   classes:
     - "Peacock_Spot"
-    - "Olive_Knot"
-    - "Leaf_Spot"
+    # - "Olive_Knot"
+    # - "Leaf_Spot"
+    - "aculus_olearius"
     - "Healthy"
-  num_classes: 4
+  num_classes: 3
   train_test_split: 0.8
   val_split: 0.1
 
