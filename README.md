@@ -179,21 +179,21 @@ olive-disease-prediction/
 │       └── train/                    # Train split
 │       └── test/                     # Test split
 │
-├── olive-leaf-detection.ipynb    # Exploratory data analysis, Model training notebook, Evaluation and analysis
+├── olive-leaf-detection.ipynb        # Exploratory data analysis, Model training notebook, Evaluation and analysis
 │
-├── train.py                # Training pipeline
+├── train.py                          # Training pipeline
 │   
-├── predict.py              # Inference script
-│   │   
-├── utils.py                # utility classes and methods
+├── predict.py                        # Inference script
+│   
+├── utils.py                          # utility classes and methods
 │
-├── Dockerfile                  # Docker image definition
+├── Dockerfile                        # Docker image definition
 │
-├── config.yaml                 # Main configuration
+├── config.yaml                       # Main configuration
 │
 ├── results/
-│   ├── models/                     # Saved model checkpoints
-│   └── plots/                      # Generated visualizations
+│   ├── models/                       # Saved model checkpoints
+│   └── plots/                        # Generated visualizations
 ```
 
 ---
@@ -421,7 +421,7 @@ model.head = torch.nn.Linear(model.head.in_features, num_classes)
 #### Hyperparameter Configuration
 
 ```yaml
-# configs/training_config.yaml
+# config.yaml
 model: resnet50
 num_classes: 6
 input_size: 224
